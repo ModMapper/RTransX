@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html style="height: 100%;">
+<head>
+    <meta charset="utf-8" />
+    <title>RTransX</title>
+</head>
+<body style="display: flex; flex-flow: column; height: 100%; margin: 0; padding: 1em; gap: 1em; box-sizing: border-box;">
+    <div style="display: flex; gap: 1em;">
+        <span>접속 토큰</span>
+        <input type="text" id="txtToken" style="flex: 1;" />
+    </div>
+    <div style="display: flex; gap: 1em;">
+        <div style="display: flex; flex: 1;">
+            <span>시작 언어&nbsp;</span>
+            <select id="selSource" style="flex: 1;">
+                <option value="EN" selected>영어</option>
+                <option value="KO">한국어</option>
+                <option value="DE">독일어</option>
+                <option value="ZH">중국어</option>
+            </select>
+        </div>
+        <div style="display: flex; flex: 1;">
+            <span>번역 언어&nbsp;</span>
+            <select id="selTarget" style="flex: 1;">
+                <option value="EN">영어</option>
+                <option value="KO" selected>한국어</option>
+                <option value="DE">독일어</option>
+                <option value="ZH">중국어</option>
+            </select>
+        </div>
+    </div>
+    <div style="display: flex; flex: 1; gap: 1em;">
+        <textarea id="txtSource" style="flex: 1; resize: none;"></textarea>
+        <textarea id="txtTarget" style="flex: 1; resize: none;" readonly></textarea>
+    </div>
+    <button id="btnTranslate" style="height: 3em;">번역</button>
+    <script>
+        const btnTranslate = document.getElementById("btnTranslate");
+        const selSource = document.getElementById("selSource");
+        const selTarget = document.getElementById("selTarget");
+        const txtSource = document.getElementById("txtSource");
+        const txtTarget = document.getElementById("txtTarget");
+        const txtToken = document.getElementById("txtToken");
+        btnTranslate.addEventListener('click', async function () {
+            const param = {
+                text: txtSource.value,
+                source_lang: selSource.value,
+                target_lang: selTarget.value,
+            };
+            const token = txtToken.value.trim();
+            const url = token.length == 0
+                ? "translate"
+                : "translate?token=" + encodeURIComponent(token);
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(param),
+            });
+            if (res.ok) {
+                const json = await res.json();
+                txtTarget.value = json.data;
+            } else {
+                txtTarget.value = await res.text();
+            }
+        });
+    </script>
+</body>
+</html>
