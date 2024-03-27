@@ -7,16 +7,8 @@ internal class Program {
         builder.Services.AddControllers();
         builder.Services.AddSingleton(new TokenChecker());
         builder.Services.AddSingleton(DeepLPool.CreatePoolAsync(8).Result);
-        builder.Services.AddCors((options) =>
-        {
-            options.AddPolicy("AllowAll", (builder) => {
-                builder.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-            });
-        });
         var app = builder.Build();
-        app.UseCors("AllowAll");
+        app.UseCors((builder) => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
         app.MapControllers();
         app.Run();
     }

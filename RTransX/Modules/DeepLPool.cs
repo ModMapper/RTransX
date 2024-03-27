@@ -34,13 +34,13 @@ public class DeepLPool {
     }
 
     private async Task<DeepLResult> FetchTranslateAsync(string text, string source, string target) {
+        if (text.Length == 0) return new() { Text = "", Alternatives = [] };
         await Lock.WaitAsync();
         try {
             if (!Pool.TryPop(out var deepl))
                 deepl = await DeepL.CreateAsync(Browser);
             try {
-                await deepl.SetLanguageAsync(source, target);
-                return await deepl.TranslateAsync(text);
+                return await deepl.TranslateAsync(text, source, target);
             } finally {
                 Pool.Push(deepl);
             }

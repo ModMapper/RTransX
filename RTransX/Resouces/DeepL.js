@@ -15,16 +15,24 @@
     fConfig.set("CONFIG__MAX_NUM_CHARACTERS", 100000);
 
     // 번역
-    window.translateAsync = function(text) {
+    window.translateAsync = function (param) {
+        const text = param.text;
+        const source = param.source;
+        const target = param.target;
         return new Promise((resolve) => {
             // 이벤트 추가
             fTSS.onTranslationsHaveChanged.push(onTranslated);
             // 번역 시작
             fDE.sourceEdit.value = text;
+            if (CheckLanguage(source) && CheckLanguage(target)) {
+                fLM.setUserSelectedSourceLang(source);
+                fLM.updateActiveLanguages(source, { lang: target });
+            }
             fTST.startSourceUpdate("");
 
             function onTranslated(e) {
                 // 이벤트 반환 및 resolve
+                const text = fAT.targetText();
                 fTSS.onTranslationsHaveChanged.remove(onTranslated);
                 resolve({
                     text: fAT.targetText(),
@@ -32,12 +40,6 @@
                 });
             }
         });
-    }
-
-    // 언어 설정
-    window.setLanguage = function (lang) {
-        if (!CheckLanguage(lang.source) || !CheckLanguage(lang.target)) return;
-        fLM.updateActiveLanguages(lang.source, { lang: lang.target });
     }
 
     function CheckLanguage(lang) {

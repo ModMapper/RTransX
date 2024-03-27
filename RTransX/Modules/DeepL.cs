@@ -23,11 +23,7 @@ public class DeepL {
 
     private IPage Page { get; }
 
-    public async Task SetLanguageAsync(string source, string target) {
-        await Page.EvaluateAsync("setLanguage", new { source, target });
-    }
-
-    public async Task<DeepLResult> TranslateAsync(string text) {
-        return await Page.EvaluateAsync<DeepLResult>("translateAsync", text);
+    public async Task<DeepLResult> TranslateAsync(string text, string source, string target) {
+        return await Page.EvaluateAsync<DeepLResult>("translateAsync", new { text, source, target });
     }
 }
