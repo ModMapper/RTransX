@@ -39,8 +39,7 @@ public class DeepLPool {
             if (!Pool.TryPop(out var deepl))
                 deepl = await DeepL.CreateAsync(Browser);
             try {
-                await deepl.SetSourceAsync(source);
-                await deepl.SetTargetAsync(target);
+                await deepl.SetLanguageAsync(source, target);
                 return await deepl.TranslateAsync(text);
             } finally {
                 Pool.Push(deepl);

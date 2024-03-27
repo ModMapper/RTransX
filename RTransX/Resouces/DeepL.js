@@ -1,70 +1,46 @@
 ﻿(function () {
-    //const translator = window._webTranslator_LMT;
-    const features = window._webTranslator_LMT.features;
-
-    // features
-    const config = features.get("/translator/core/config")
-    const alternativeTranslations = features.get("/translator/common/alternativeTranslations");
-    //const triggerSourceTranslation = features.get("/translator/core/triggerSourceTranslation");
-    const translateSourceSentences = features.get("/translator/core/translateSourceSentences");
-    const retranslationServices = features.get("/translator/core/retranslationServices");
-    const sourceLanguages = features.get("/translator/core/sourceLanguages");
-    const targetLanguages = features.get("/translator/core/targetLanguages");
-    const domElements = features.get("/translator/core/domElements");
-
-    // 제한해제
-    config.set("CONFIG__MAX_NUM_CHARACTERS", 100000);
-    console.log("TEST");
+    const features = _webTranslator_LMT.features;
+    const fConfig       = features.get("/translator/core/config");
+    const fAT   = features.get("/translator/common/alternativeTranslations");
+    const fTSS  = features.get("/translator/core/translateSourceSentences");
+    const fDE   = features.get("/translator/core/domElements");
+    const fTST = features.get("/translator/core/triggerSourceTranslation");
+    const fLM = features.get("/translator/core/languageManagement");
 
     // 배너 제거
     const banner = document.querySelector("[data-testid=dl-cookieBanner]");
     if (banner != null) banner.remove();
 
-    let onChanged = null;
-    translateSourceSentences.onTargetSentencesHaveChanged.push(() => {
-        if (onChanged != null) setTimeout(onChanged, 0);
-    });
+    // 길이 제한 해제
+    fConfig.set("CONFIG__MAX_NUM_CHARACTERS", 100000);
 
-    window.setSourceLang = function (lang) {
-        SetLanguage(sourceLanguages, lang);
-    }
-    window.setTargetLang = function (lang) {
-        SetLanguage(targetLanguages, lang);
-    }
+    // 번역
+    window.translateAsync = function(text) {
+        return new Promise((resolve) => {
+            // 이벤트 추가
+            fTSS.onTranslationsHaveChanged.push(onTranslated);
+            // 번역 시작
+            fDE.sourceEdit.value = text;
+            fTST.startSourceUpdate("");
 
-    window.translate = function (text) {
-        return new Promise((resolve, reject) => {
-            onChanged = () => {
-                const result = getResult();
-                if (result.text != "")
-                    resolve(result);
-            };
-
-            domElements.sourceEdit.value = text;
-            retranslationServices.reset();
-
-            setTimeout(reject, 60000);
+            function onTranslated(e) {
+                // 이벤트 반환 및 resolve
+                fTSS.onTranslationsHaveChanged.remove(onTranslated);
+                resolve({
+                    text: fAT.targetText(),
+                    alternatives: fAT.activeAlternatives().map((v) => v.text)
+                });
+            }
         });
     }
 
-    function getResult() {
-        const text = alternativeTranslations.targetText();
-        const alternatives = alternativeTranslations.activeAlternatives().map((item) => item.text);
-        return { text: text, alternatives: alternatives };
+    // 언어 설정
+    window.setLanguage = function (lang) {
+        if (!CheckLanguage(lang.source) || !CheckLanguage(lang.target)) return;
+        fLM.updateActiveLanguages(lang.source, { lang: lang.target });
     }
 
-
-
-    function SetLanguage(languages, lang) {
-        if (lang == null || lang.length == 0) return;
-        lang = lang.toLowerCase();
-        for (const item of languages.getLanguages()) {
-            if (item.lang.toLowerCase() == lang) {
-                languages.setCurrentLanguage(lang);
-                return;
-            }
-        }
+    function CheckLanguage(lang) {
+        return _webTranslator_LMT._config.languageConfig[lang] != null;
     }
-
 })();
-

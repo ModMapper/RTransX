@@ -8,8 +8,10 @@ using System.Net.Mime;
 
 [Route("/")]
 [ApiController]
-public class MainController(TokenChecker checker, DeepLPool pool) : ControllerBase {
+public class MainController(ILogger<MainController> logger, TokenChecker checker, DeepLPool pool) : ControllerBase {
     private long idSeq = 0;
+
+    public ILogger<MainController> Logger => logger;
 
     public TokenChecker TokenChecker => checker;
 
@@ -23,12 +25,15 @@ public class MainController(TokenChecker checker, DeepLPool pool) : ControllerBa
     [HttpPost("translate")]
     public async Task<Response> Translate(Request req, [FromQuery(Name = "token")]string? token) {
         if(TokenChecker.Check(token)) {
+            long id = Interlocked.Increment(ref idSeq);
+            Logger.LogInformation("[{id}] 번역 요청 [{source,2} -> {target,2}][{length}자]", id, req.SourceLang, req.TargetLang, req.Text.Length);
             var result = await Pool.TranslateAsync(req.Text, req.SourceLang, req.TargetLang);
+            Logger.LogInformation("[{id}] 번역 완성 [{source,2} -> {target,2}][{length}자]", id, req.SourceLang, req.TargetLang, result.Text.Length);
             return new() {
                 Alternatives = result.Alternatives,
                 Code = 200,
                 Data = result.Text,
-                Id = Interlocked.Increment(ref idSeq),
+                Id = id,
                 Method = "Free",
                 SourceLang = req.SourceLang,
                 TargetLang = req.TargetLang,

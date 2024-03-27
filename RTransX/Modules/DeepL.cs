@@ -10,8 +10,7 @@ public class DeepL {
     public static async Task<DeepL> CreateAsync(IBrowser browser) {
         var page = await browser.NewPageAsync();
         await page.GotoAsync(URL);
-        await page.WaitForSelectorAsync("#textareasContainer");
-        await Task.Delay(2000);
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await page.EvaluateAsync(Resources.DeepL);
         return new DeepL(page);
     }
@@ -24,15 +23,11 @@ public class DeepL {
 
     private IPage Page { get; }
 
-    public async Task SetSourceAsync(string lang) {
-        await Page.EvaluateAsync("setSourceLang", lang);
-    }
-
-    public async Task SetTargetAsync(string lang) {
-        await Page.EvaluateAsync("setTargetLang", lang);
+    public async Task SetLanguageAsync(string source, string target) {
+        await Page.EvaluateAsync("setLanguage", new { source, target });
     }
 
     public async Task<DeepLResult> TranslateAsync(string text) {
-        return await Page.EvaluateAsync<DeepLResult>("translate", text);
+        return await Page.EvaluateAsync<DeepLResult>("translateAsync", text);
     }
 }
